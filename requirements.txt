@@ -1,0 +1,16 @@
+fastmcp
+langchain
+langchain-core
+langchain-community
+langchain-google-genai
+langchain-groq
+langchain-nvidia-ai-endpoints
+langchain-openai                         
+langchain-huggingface                    
+langchain-mcp-adapters                   
+langchain-pinecone                       
+langgraph
+pydantic
+langchain-tavily
+fastapi
+uvicorn
