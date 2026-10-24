@@ -7,19 +7,18 @@ from zoneinfo import ZoneInfo
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage, BaseMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.prebuilt import ToolNode
-from langgraph.types import interrupt
 
 from src.core.config import clarification_llm, chat_llm, evaluator_llm, execution_llm, orchestrator_llm, synth_llm
 from src.graph.prompts import (
     build_conversation_prompt,
-    build_clarifier_prompt,
+    build_clarification_prompt,
     build_evaluator_prompt,
     build_mcp_prompt,
     build_orchestrator_prompt,
     build_synthesizer_prompt,
 )
 from src.graph.state import MCPState, MasterState
-from src.planner.schemas import ObjectiveCompletionEvaluatorSchema, OrchestratorOutput, RewrittenQueryOutput
+from src.planner.schemas import ObjectiveCompletionEvaluatorSchema, OrchestratorOutput
 
 logger = logging.getLogger(__name__)
 MAX_CONCURRENT_TOOLS = 5
@@ -55,6 +54,10 @@ async def orchestrator(state: MasterState) -> MasterState:
     else:
         route = "Conversation"
 
+    current_clarification_iteration = state.get("current_clarification_iteration", 0)
+    if not response.need_clarification:
+        current_clarification_iteration = 0
+
     return {
         "need_clarification": response.need_clarification,
         "clarification_reason": response.clarification_reason,
@@ -62,71 +65,9 @@ async def orchestrator(state: MasterState) -> MasterState:
         "execution_guidance": response.execution_guidance,
         "route": route,
         "final_response": None,
-        "user_clarification": None,
-        "user_clarification_intent_type": None,
         "mcp_results": [],
         "rag_context": None,
-        "current_clarification_iteration": state.get("current_clarification_iteration", 0)
-    }
-
-
-async def ambiguity_clarifier(state: MasterState) -> MasterState:
-    """Resolve genuine ambiguity by obtaining clarification from the user, interpreting the response in the context of the original request, and updating the query based on whether the user continues, changes, or cancels the request."""
-
-    reason = state.get("clarification_reason", "")
-    human_response = interrupt(f"I need a bit more context: {reason}\nPlease clarify your request.")
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", build_clarifier_prompt()),
-        ("human", "Original Query: {original_query}\nReason: {reason}\nUser Response: {response}"),
-    ])
-    chain = prompt | clarification_llm.with_structured_output(RewrittenQueryOutput, method="json_schema")
-    result = await chain.ainvoke({"original_query": state.get("query", ""), "reason": reason, "response": human_response})
-
-    new_state = {
-        "query": result.rewritten_query,
-        "history": [
-            AIMessage(content=f"I need a bit more context: {reason}."),
-            HumanMessage(content=human_response)],
-        "need_clarification": False,
-        "clarification_reason": None,
-        "user_clarification": human_response,
-        "user_clarification_intent_type": result.intent_type,
-        "final_response": None,
-        "task_plan": [],
-        "execution_guidance": "",
-        "route": None,
-        "mcp_results": [],
-        "rag_context": None,
-        "timestamp": datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M:%S")
-    }
-
-    if result.intent_type == "merge":
-        new_state["current_clarification_iteration"] = (state.get("current_clarification_iteration", 0) + 1)
-    else:
-        new_state["current_clarification_iteration"] = 0
-
-    return new_state
-
-
-async def cancel_node(state: MasterState) -> MasterState:
-    """Finalize a user-cancelled request by recording the cancellation response and resetting the active execution and clarification state."""
-
-    cancel_response = "Task cancelled. Let me know if there's anything else you'd like to do!"
-
-    return {
-        "final_response": cancel_response,
-        "history": [AIMessage(content=cancel_response)],
-        "need_clarification": False,
-        "clarification_reason": None,
-        "current_clarification_iteration": 0,
-        "route": None,
-        "task_plan": [],
-        "execution_guidance": "",
-        "user_clarification": None,
-        "user_clarification_intent_type": None,
-        "mcp_results": [],
-        "rag_context": None
+        "current_clarification_iteration": current_clarification_iteration
     }
 
 
@@ -147,12 +88,33 @@ async def clarification_limit_node(state: MasterState) -> MasterState:
         "route": None,
         "task_plan": [],
         "execution_guidance": "",
-        "user_clarification": None,
-        "user_clarification_intent_type": None,
         "mcp_results": [],
         "rag_context": None
     }
 
+async def clarification_node(state: MasterState) -> MasterState:
+    """ Handle requests that require additional user clarification by generating a clarification prompt based on the orchestrator's feedback and the conversation context, while enforcing the clarification iteration limit."""
+
+    history = state.get("history", [])
+    context_history = history[:-1] if history and isinstance(history[-1], HumanMessage) else history
+
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", build_clarification_prompt()),
+        MessagesPlaceholder(variable_name="history", optional=True),
+        ("human", "User's Request: {query}\nClarification Reason: {clarification_reason}")
+    ])
+    response = await (prompt | clarification_llm).ainvoke({"history": context_history, "query": state.get("query", ""), "clarification_reason": state.get("clarification_reason", "")})
+
+    return {
+        "final_response": response.content,
+        "history": [AIMessage(content=response.content)],
+        "current_clarification_iteration": state.get("current_clarification_iteration", 0) + 1,
+        "route": None,
+        "task_plan": [],
+        "execution_guidance": "",
+        "mcp_results": [],
+        "rag_context": None
+    }
 
 async def conversation_node(state: MasterState) -> MasterState:
     """Handle requests that can be answered directly using model capabilities, relevant conversation context, and available system information without MCP or RAG execution."""
@@ -175,8 +137,6 @@ async def conversation_node(state: MasterState) -> MasterState:
         "need_clarification": False,
         "task_plan": [],
         "execution_guidance": "",
-        "user_clarification": None,
-        "user_clarification_intent_type": None,
         "mcp_results": [],
         "rag_context": None
     }

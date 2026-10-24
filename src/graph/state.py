@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Literal, TypedDict, NotRequired
 from langchain_core.messages import AnyMessage, ToolMessage
 from langgraph.graph.message import add_messages
 
@@ -24,9 +24,7 @@ class MasterState(BaseSharedState):
 
     need_clarification: bool
     clarification_reason: str | None
-    user_clarification: str | None
-    user_clarification_intent_type: Literal["merge", "context_switch", "cancel"] | None
-    current_clarification_iteration: int
+    current_clarification_iteration: NotRequired[int]
     max_clarification_iterations: int
     route: Route | None
 

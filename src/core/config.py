@@ -24,7 +24,7 @@ client_config = {
 }
 
 orchestrator_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.0)
-clarification_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.2)
+clarification_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.3)
 execution_llm = ChatNVIDIA(model="nvidia/nemotron-3.5-super-vl-120b-a12b", temperature=0.0)
 evaluator_llm = ChatNVIDIA(model="nvidia/nemotron-3.5-super-vl-120b-a12b", temperature=0.0)
 chat_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.2)

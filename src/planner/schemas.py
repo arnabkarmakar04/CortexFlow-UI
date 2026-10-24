@@ -42,13 +42,13 @@ class OrchestratorOutput(BaseModel):
         description=(
             "True only when the user's core intent, an essential reference, or genuinely conflicting instructions cannot be resolved reliably from the current request and relevant conversation context. "
             "False when the request is sufficiently clear to proceed. "
-            "Do not request clarification for unresolved tool, parameter, temporal, or downstream implementation details."
+            "Do not request clarification for missing tool, parameter, temporal, or downstream implementation details."
         )
     )
+
     clarification_reason: str = Field(
         description=(
-            "Concise explanation of the unresolved ambiguity when clarification is required. "
-            "When clarification is not required, state that no clarification is required."
+            "Concise explanation of the unresolved ambiguity when need_clarification is true, otherwise an empty string."
         )
     )
     tasks: list[TaskSpec] = Field(
@@ -106,25 +106,6 @@ class OrchestratorOutput(BaseModel):
                 if task_index[dependency_id] >= index:
                     raise ValueError(f"Task '{task.task_id}' references dependency '{dependency_id}' that does not appear earlier in the ordered task plan.\n")
         return self
-
-class RewrittenQueryOutput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    intent_type: Literal["merge", "context_switch", "cancel"] = Field(
-        description=(
-            "'merge' when the user continues the original request by providing clarification, missing information, corrections, or additional constraints. "
-            "'context_switch' when the user abandons the original request and starts a different request. "
-            "'cancel' when the user explicitly cancels or stops the current request."
-        )
-    )
-
-    rewritten_query: str = Field(
-        description=(
-            "For 'merge', return the original query updated only with information explicitly provided by the user. "
-            "Preserve the original objective and all unchanged information. "
-            "For 'context_switch' or 'cancel', return exactly the user's response."
-        )
-    )
 
 class ObjectiveCompletionEvaluatorSchema(BaseModel):
     model_config = ConfigDict(extra="forbid")

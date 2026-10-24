@@ -12,7 +12,7 @@ def route_after_orchestrator(state: MasterState) -> list[str]:
     if state.get("need_clarification"):
         if state.get("current_clarification_iteration", 0) >= state.get("max_clarification_iterations", 3):
             return ["ClarificationLimit"]
-        return ["Clarifier"]
+        return ["Clarification_Node"]
 
     route = state.get("route")
 
@@ -25,12 +25,6 @@ def route_after_orchestrator(state: MasterState) -> list[str]:
 
     return ["Conversation"]
 
-def route_after_clarifier(state: MasterState) -> str:
-    """Route the clarified request either to cancellation handling or back to the orchestrator for re-evaluation."""
-
-    if state.get("user_clarification_intent_type") == "cancel":
-        return "CancelNode"
-    return "Orchestrator"
 
 def route_after_mcp(state: MCPState) -> Literal["ToolExecutor", "MCPCollector"]:
     """Route MCP execution to the tool executor when the latest planner output contains tool calls; otherwise route to the result collector."""
@@ -77,6 +71,7 @@ def route_after_tool_executor(state: MCPState) -> Literal["Evaluator", "MCPColle
         return "Evaluator"
 
     return "MCPCollector"
+
 
 def route_after_evaluator(state: MCPState) -> Literal["MCP_Node", "MCPCollector"]:
     """Route MCP execution back to the planner when further execution is required; otherwise route to the result collector."""

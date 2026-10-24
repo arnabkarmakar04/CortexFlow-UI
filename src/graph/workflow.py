@@ -4,8 +4,8 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from src.core.errors import graph_error_handler
-from src.graph.nodes import ambiguity_clarifier, cancel_node, clarification_limit_node, mcp_result_collector, conversation_node, create_mcp_tool_node, mcp_node, successful_objective_evaluator, orchestrator, rag_node, final_synthesizer
-from src.graph.router import route_after_clarifier, route_after_evaluator, route_after_mcp, route_after_orchestrator, route_after_tool_executor
+from src.graph.nodes import clarification_limit_node, clarification_node, mcp_result_collector, conversation_node, create_mcp_tool_node, mcp_node, successful_objective_evaluator, orchestrator, rag_node, final_synthesizer
+from src.graph.router import route_after_evaluator, route_after_mcp, route_after_orchestrator, route_after_tool_executor
 from src.graph.state import MCPState, MasterState
 
 
@@ -52,8 +52,7 @@ def build_graph(tools: list):
     workflow.set_node_defaults(error_handler=graph_error_handler)
 
     workflow.add_node("Orchestrator", orchestrator)
-    workflow.add_node("Clarifier", ambiguity_clarifier)
-    workflow.add_node("CancelNode", cancel_node)
+    workflow.add_node("Clarification_Node", clarification_node)
     workflow.add_node("ClarificationLimit", clarification_limit_node)
     workflow.add_node("MCP_Subgraph", mcp_app)
     workflow.add_node("RAG", rag_node)
@@ -62,19 +61,11 @@ def build_graph(tools: list):
 
     workflow.add_edge(START, "Orchestrator")
     workflow.add_conditional_edges("Orchestrator", route_after_orchestrator)
-    workflow.add_conditional_edges(
-        "Clarifier",
-        route_after_clarifier,
-        {
-            "Orchestrator": "Orchestrator",
-            "CancelNode": "CancelNode"
-        }
-    )
+    workflow.add_edge("Clarification_Node", END)
+    workflow.add_edge("ClarificationLimit", END)
+    workflow.add_edge("Conversation", END)
     workflow.add_edge("MCP_Subgraph", "final_Synthesizer")
     workflow.add_edge("RAG", "final_Synthesizer")
     workflow.add_edge("final_Synthesizer", END)
-    workflow.add_edge("CancelNode", END)
-    workflow.add_edge("ClarificationLimit", END)
-    workflow.add_edge("Conversation", END)
 
     return workflow.compile(checkpointer=memory)
