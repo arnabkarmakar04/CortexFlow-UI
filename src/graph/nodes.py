@@ -76,7 +76,7 @@ async def clarification_limit_node(state: MasterState) -> MasterState:
 
     clarification_limit_response = (
         "I'm unable to complete this request because the required information wasn't provided after multiple clarification attempts."
-        "Let's start fresh. Please enter your request again with the required details."
+        " Let's start fresh. Please enter your request again with the required details."
     )
 
     return {
