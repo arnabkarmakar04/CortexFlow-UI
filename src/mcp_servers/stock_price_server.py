@@ -82,11 +82,11 @@ def stock_price(symbol: str):
         data = response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("Stock API request timed out.")
+        logger.error("Stock API request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Stock data provider request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("Stock API request failed.")
+        logger.error("Stock API request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Stock data provider request failed: {exc}") from exc
 
     if not isinstance(data, dict):

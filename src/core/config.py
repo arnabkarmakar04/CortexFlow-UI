@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 
 from langchain_groq import ChatGroq
-from langchain_nvidia import ChatNVIDIA
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -28,5 +28,4 @@ clarification_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.3)
 execution_llm = ChatNVIDIA(model="nvidia/nemotron-3.5-super-vl-120b-a12b", temperature=0.0)
 evaluator_llm = ChatNVIDIA(model="nvidia/nemotron-3.5-super-vl-120b-a12b", temperature=0.0)
 chat_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.2)
-chat_synth_llm = chat_llm
-synth_llm = ChatNVIDIA(model="openai/gpt-oss-20b", temperature=0.2)
+synth_llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0.2)

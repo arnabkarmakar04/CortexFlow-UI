@@ -128,11 +128,11 @@ def weather_report(location: str | None = None) -> dict:
         geo = geo_response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("Weather geocoding request timed out.")
+        logger.error("Weather geocoding request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Weather data provider request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("Weather geocoding request failed.")
+        logger.error("Weather geocoding request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Weather data provider request failed: {str(exc)}") from exc
 
     if not isinstance(geo, list) or not geo:
@@ -162,11 +162,11 @@ def weather_report(location: str | None = None) -> dict:
         weather = weather_response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("Weather request timed out.")
+        logger.error("Weather request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Weather data provider request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("Weather request failed.")
+        logger.error("Weather request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Weather data provider request failed: {str(exc)}") from exc
 
     if not isinstance(weather, dict):

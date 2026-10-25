@@ -30,11 +30,11 @@ def get_current_location() -> dict:
         data = response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("IP geolocation request timed out.")
+        logger.error("IP geolocation request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Location provider request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("IP geolocation request failed.")
+        logger.error("IP geolocation request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Location provider request failed: {str(exc)}") from exc
 
     if not isinstance(data, dict):

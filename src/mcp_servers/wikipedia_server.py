@@ -73,11 +73,11 @@ def wikipedia_search(query: str):
         search_data = search_response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("Wikipedia search request timed out.")
+        logger.error("Wikipedia search request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Wikipedia API request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("Wikipedia search request failed.")
+        logger.error("Wikipedia search request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Wikipedia API request failed: {exc}") from exc
 
     if not isinstance(search_data, dict):
@@ -117,11 +117,11 @@ def wikipedia_search(query: str):
         article = summary_response.json()
 
     except requests.exceptions.Timeout as exc:
-        logger.exception("Wikipedia summary request timed out.")
+        logger.error("Wikipedia summary request timed out | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError("Wikipedia API request timed out.") from exc
 
     except requests.exceptions.RequestException as exc:
-        logger.exception("Wikipedia summary request failed.")
+        logger.error("Wikipedia summary request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Wikipedia API request failed: {exc}") from exc
 
     if not isinstance(article, dict):

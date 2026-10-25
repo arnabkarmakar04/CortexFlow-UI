@@ -98,7 +98,7 @@ def add_expense( start_date: Optional[str] = None, amount: float = 0.0, category
         }
 
     except sqlite3.Error as e:
-        logger.exception("Expense database operation failed.")
+        logger.error("Expense database operation failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Expense database operation failed: {str(e)}") from e
 
 @mcp.tool(name="List-Expenses")
@@ -162,7 +162,7 @@ def list_expenses( start_date: Optional[str] = None, end_date: Optional[str] = N
         }
 
     except sqlite3.Error as e:
-        logger.exception("Expense database operation failed.")
+        logger.error("Expense database operation failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Expense database operation failed: {str(e)}") from e
 
 @mcp.tool(name="Summarize-Expenses")
@@ -234,7 +234,7 @@ def summarize_expenses( start_date: Optional[str] = None, end_date: Optional[str
         }
 
     except sqlite3.Error as e:
-        logger.exception("Expense database operation failed.")
+        logger.error("Expense database operation failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Expense database operation failed: {str(e)}") from e
 
 if __name__ == "__main__":

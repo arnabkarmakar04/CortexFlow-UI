@@ -54,7 +54,7 @@ def duckduckgo_search(query: str):
         }
 
     except Exception as e:
-        logger.exception("Unexpected DuckDuckGo search error.")
+        logger.error("Unexpected DuckDuckGo search error | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"DuckDuckGo search failed: {str(e)}") from e
 
 if __name__ == "__main__":

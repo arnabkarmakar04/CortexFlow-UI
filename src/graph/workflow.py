@@ -15,6 +15,8 @@ def build_graph(tools: list):
     mcp_tool_node = create_mcp_tool_node(tools)
 
     mcp_subgraph = StateGraph(MCPState)
+    # Parent graph defaults do not propagate into a compiled subgraph.
+    mcp_subgraph.set_node_defaults(error_handler=graph_error_handler)
     mcp_subgraph.add_node("MCP_Node", partial(mcp_node, tools=tools))
     mcp_subgraph.add_node("ToolExecutor", mcp_tool_node)
     mcp_subgraph.add_node("Evaluator", successful_objective_evaluator)
@@ -46,6 +48,7 @@ def build_graph(tools: list):
         }
     )
     mcp_subgraph.add_edge("MCPCollector", END)
+    # Default None resets subgraph state per invocation while inheriting parent checkpoint support for interrupts.
     mcp_app = mcp_subgraph.compile()
 
     workflow = StateGraph(MasterState)
