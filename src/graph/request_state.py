@@ -21,10 +21,10 @@ def create_request_state(user_input: str) -> dict:
         "execution_guidance": "",
         "need_clarification": False,
         "clarification_reason": "",
-        # Intentionally omit current_clarification_iteration so its checkpointed
-        # value survives between messages in the same conversation.
         "max_clarification_iterations": 3,
         "route": None,
         "mcp_results": [],
         "rag_context": None,
+        "run_status": "running",
+        "tool_error_status": False,
     }

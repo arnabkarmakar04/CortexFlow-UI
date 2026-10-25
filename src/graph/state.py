@@ -5,6 +5,7 @@ from langgraph.graph.message import add_messages
 from src.planner.schemas import TaskSpec
 
 Route = Literal["MCP", "RAG", "Conversation", "MCP_RAG"]
+RunStatus = Literal["running", "completed", "failed"]
 
 
 class BaseSharedState(TypedDict):
@@ -18,6 +19,8 @@ class BaseSharedState(TypedDict):
     execution_guidance: str
     mcp_results: list[ToolMessage]
     rag_context: str | None
+    run_status: RunStatus
+    tool_error_status: bool
 
 class MasterState(BaseSharedState):
     """Top-level routing and clarification state."""

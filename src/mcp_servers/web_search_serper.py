@@ -54,7 +54,7 @@ async def web_search(query: str):
         response = await search.aresults(query=normalized_query)
 
     except Exception as exc:
-        logger.exception("Web search request failed.")
+        logger.error("Web search request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Web search provider request failed: {exc}") from exc
 
     if not isinstance(response, dict):

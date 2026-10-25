@@ -57,11 +57,25 @@ def route_after_tool_executor(state: MCPState) -> Literal["Evaluator", "MCPColle
             current_tool_messages.append(message)
 
     if not current_tool_messages:
-        logger.warning("No MCP tool results found after ToolNode execution.\n")
+        logger.warning("No MCP tool results found after ToolNode execution.")
         return "MCPCollector"
 
     for message in current_tool_messages:
+        # The custom ToolNode error handler represents handled tool failures as
+        # ToolMessage(status="error"); this is an intentional workflow branch.
         if message.status == "error":
+            error_detail = " ".join(str(message.content).split())
+            if not error_detail:
+                error_detail = "No error details provided"
+            elif len(error_detail) > 400:
+                error_detail = error_detail[:399] + "…"
+
+            logger.error(
+                "MCP tool returned an error ToolMessage | tool=%s | tool_call_id=%s | error=%s",
+                message.name or "unknown",
+                message.tool_call_id or "unknown",
+                error_detail,
+            )
             return "MCPCollector"
 
     # Check if any MCP task has dependencies that need to be evaluated
@@ -84,5 +98,5 @@ def route_after_evaluator(state: MCPState) -> Literal["MCP_Node", "MCPCollector"
     if status == "complete":
         return "MCPCollector"
 
-    logger.error("Unexpected MCP evaluation status: %s\n", status)
+    logger.error("Unexpected MCP evaluation status | status=%s", status)
     return "MCPCollector"

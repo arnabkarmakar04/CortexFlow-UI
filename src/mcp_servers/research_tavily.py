@@ -64,7 +64,7 @@ def tavily_search(query: str) -> dict:
         )
 
     except Exception as exc:
-        logger.exception("Tavily search request failed.")
+        logger.error("Tavily search request failed | error=%s", " ".join(str(exc).split())[:500])
         raise RuntimeError(f"Tavily search provider request failed: {exc}") from exc
 
     if not isinstance(response, dict):

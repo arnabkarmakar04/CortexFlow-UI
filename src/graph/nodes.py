@@ -9,6 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langgraph.prebuilt import ToolNode
 
 from src.core.config import clarification_llm, chat_llm, evaluator_llm, execution_llm, orchestrator_llm, synth_llm
+from src.core.errors import exception_summary, get_error_message
 from src.graph.prompts import (
     build_conversation_prompt,
     build_clarification_prompt,
@@ -75,13 +76,14 @@ async def clarification_limit_node(state: MasterState) -> MasterState:
     """Terminate the clarification flow when the maximum number of clarification attempts is reached and reset the active execution and clarification state."""
 
     clarification_limit_response = (
-        "I'm unable to complete this request because the required information wasn't provided after multiple clarification attempts."
-        " Let's start fresh. Please enter your request again with the required details."
+        "I'm unable to complete this request because the required information wasn't provided after multiple clarification attempts. "
+        "Let's start fresh. Please enter your request again with the required details."
     )
 
     return {
         "final_response": clarification_limit_response,
         "history": [AIMessage(content=clarification_limit_response)],
+        "run_status": "completed",
         "need_clarification": False,
         "clarification_reason": None,
         "current_clarification_iteration": 0,
@@ -108,6 +110,7 @@ async def clarification_node(state: MasterState) -> MasterState:
     return {
         "final_response": response.content,
         "history": [AIMessage(content=response.content)],
+        "run_status": "completed",
         "current_clarification_iteration": state.get("current_clarification_iteration", 0) + 1,
         "route": None,
         "task_plan": [],
@@ -132,6 +135,7 @@ async def conversation_node(state: MasterState) -> MasterState:
     return {
         "final_response": response.content,
         "history": [AIMessage(content=response.content)],
+        "run_status": "completed",
         "current_clarification_iteration": 0,
         "route": None,
         "need_clarification": False,
@@ -167,8 +171,8 @@ async def mcp_node(state: MCPState, tools: list) -> MCPState:
     response = await (prompt | execution_llm.bind_tools(tools)).ainvoke({"current_timestamp": state.get("timestamp") or current_timestamp(), "query": state.get("query", ""), "task_plan": task_plan, "guidance": state.get("execution_guidance", ""), "history": execution_history, "feedback": state.get("evaluator_reasoning", "")})
 
     if response.invalid_tool_calls:
-        logger.error("MCP Planner produced invalid tool calls: %s\n", response.invalid_tool_calls)
-        raise RuntimeError("MCP Planner produced invalid tool calls.\n")
+        logger.error("MCP Planner produced invalid tool calls | invalid_calls=%s", response.invalid_tool_calls)
+        raise RuntimeError("MCP Planner produced invalid tool calls.")
 
     if not response.tool_calls:
         logger.warning("MCP Planner produced no executable tool call.")
@@ -187,28 +191,51 @@ async def mcp_node(state: MCPState, tools: list) -> MCPState:
 
 
 def mcp_result_collector(state: MCPState) -> MCPState:
-    """Collects all ToolMessage results from the working memory and stores them in mcp_results."""
+    """Collect this MCP invocation's tool results and preserve its error outcome."""
+    
+    working_memory = state.get("working_memory", [])
+    tool_messages = [message for message in working_memory if isinstance(message, ToolMessage)]
 
-    tool_messages = [message for message in state.get("working_memory", []) if isinstance(message, ToolMessage)]
+    # The subgraph state resets on each invocation; working_memory still accumulates across MCP loop steps within this run.
+    tool_error_status = state.get("tool_error_status", False) or any(
+        message.status == "error" for message in tool_messages
+    )
 
     return {
         "mcp_results": tool_messages,
+        "tool_error_status": tool_error_status,
     }
 
 
-def create_mcp_tool_node(tools: list) -> ToolNode:
-    """Create an MCP tool executor with bounded concurrency to safely execute available tools in parallel."""
+def tool_error_message(exc: Exception) -> str:
+    """Log tool failures internally and return only a safe error summary to the model."""
+    logger.error(
+        "MCP tool invocation failed inside ToolNode | exception_type=%s | error=%s",
+        type(exc).__name__,
+        exception_summary(exc),
+    )
+    return get_error_message(exc)
 
+
+def create_mcp_tool_node(tools: list) -> ToolNode:
+    """Create a bounded-concurrency tool executor that preserves ToolMessage error status."""
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_TOOLS)
 
     async def bounded_tool_call(request, handler):
         async with semaphore:
             return await handler(request)
 
-    return ToolNode(tools, name="MCP_ToolExecutor", messages_key="working_memory", handle_tool_errors=True, awrap_tool_call=bounded_tool_call)
+    return ToolNode(
+        tools,
+        name="MCP_ToolExecutor",
+        messages_key="working_memory",
+        handle_tool_errors=tool_error_message,
+        awrap_tool_call=bounded_tool_call,
+    )
 
 
 def get_mcp_result(message: ToolMessage) -> dict | None:
+    """Extract structured result from a ToolMessage, if available."""
     if isinstance(message.artifact, dict):
         structured_content = message.artifact.get("structured_content")
         if isinstance(structured_content, dict):
@@ -279,7 +306,17 @@ async def successful_objective_evaluator(state: MCPState) -> MCPState:
 
 
 async def final_synthesizer(state: MasterState) -> MasterState:
-    """Synthesize the completed execution results, relevant conversation context, and available knowledge into a single accurate, coherent, non-duplicative final user-facing response."""
+    """Synthesize successful/partial results, preserving an earlier handled graph failure."""
+
+    # A failed node in the MCP subgraph ends that subgraph, but the parent graph may still reach this deferred node. Do not overwrite its safe error response.
+    if state.get("run_status") == "failed":
+        return {
+            "task_plan": [],
+            "execution_guidance": "",
+            "mcp_results": [],
+            "rag_context": None,
+            "route": None,
+        }
 
     history = state.get("history", [])
     context_history = history[:-1] if history and isinstance(history[-1], HumanMessage) else history
@@ -296,8 +333,10 @@ async def final_synthesizer(state: MasterState) -> MasterState:
     return {
         "final_response": response.content,
         "history": [AIMessage(content=response.content)],
+        "run_status": "completed",
         "task_plan": [],
         "execution_guidance": "",
         "mcp_results": [],
         "rag_context": None,
+        "route": None,
     }

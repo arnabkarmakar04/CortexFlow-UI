@@ -188,11 +188,11 @@ def get_events( query: str = "", start_datetime: str | None = None, max_datetime
         }
 
     except HttpError as e:
-        logger.exception("Google Calendar API request failed.")
+        logger.error("Google Calendar API request failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Google Calendar API Error: {str(e)}") from e
 
     except Exception as e:
-        logger.exception("Unexpected calendar error.")
+        logger.error("Unexpected calendar error | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Calendar event listing failed: {str(e)}") from e
 
 @mcp.tool(name="Find-Calendar-Event")
@@ -221,11 +221,11 @@ def find_calendar_event(query: str):
         }
 
     except HttpError as e:
-        logger.exception("Google Calendar API request failed.")
+        logger.error("Google Calendar API request failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Google Calendar API Error: {str(e)}") from e
 
     except Exception as e:
-        logger.exception("Unexpected calendar search error.")
+        logger.error("Unexpected calendar search error | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Calendar event search failed: {str(e)}") from e
 
 @mcp.tool(name="Create-Calendar-Event")
@@ -316,11 +316,11 @@ def create_event( summary: str, start_datetime: str | None = None, end_datetime:
         }
 
     except HttpError as e:
-        logger.exception("Google Calendar create request failed.")
+        logger.error("Google Calendar create request failed | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Google Calendar API Error: {str(e)}") from e
 
     except Exception as e:
-        logger.exception("Unexpected calendar create error.")
+        logger.error("Unexpected calendar create error | error=%s", " ".join(str(e).split())[:500])
         raise RuntimeError(f"Calendar event creation failed: {str(e)}") from e
     
 if __name__ == "__main__":

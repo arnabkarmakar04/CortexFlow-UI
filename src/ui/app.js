@@ -189,7 +189,23 @@
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.detail || `Request failed (${response.status})`);
-      addMessage(conversation, "assistant", data.response || "The agent returned no response.");
+
+      const answer = data.response || "The agent returned no response.";
+      if (data.status === "failed") {
+        addMessage(
+          conversation,
+          "assistant",
+          `**Request failed.**\n\n${answer}\n\nCheck the FastAPI terminal logs for the node or model failure details.`
+        );
+      } else if (data.status === "completed_with_tool_errors") {
+        addMessage(
+          conversation,
+          "assistant",
+          `**Completed with tool errors.**\n\n${answer}`
+        );
+      } else {
+        addMessage(conversation, "assistant", answer);
+      }
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
       addMessage(conversation, "assistant", `**Request failed.**\n\n${detail}\n\nCheck the FastAPI terminal logs and confirm the MCP servers and graph initialized successfully.`);
