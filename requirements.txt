@@ -23,3 +23,6 @@ fastmcp
 python-dotenv
 requests
 tavily-python
+
+langgraph-checkpoint-postgres
+psycopg[binary,pool]

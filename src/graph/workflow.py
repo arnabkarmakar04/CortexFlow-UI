@@ -1,6 +1,5 @@
 from functools import partial
 
-from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from src.core.errors import graph_error_handler
@@ -9,9 +8,8 @@ from src.graph.router import route_after_evaluator, route_after_mcp, route_after
 from src.graph.state import MCPState, MasterState
 
 
-def build_graph(tools: list):
+def build_graph(tools: list, checkpointer):
 
-    memory = InMemorySaver()
     mcp_tool_node = create_mcp_tool_node(tools)
 
     mcp_subgraph = StateGraph(MCPState)
@@ -71,4 +69,4 @@ def build_graph(tools: list):
     workflow.add_edge("RAG", "final_Synthesizer")
     workflow.add_edge("final_Synthesizer", END)
 
-    return workflow.compile(checkpointer=memory)
+    return workflow.compile(checkpointer=checkpointer)

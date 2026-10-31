@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="CortexFlow AI assistant">
+  <title>CortexFlow</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="17" rx="3"/><path d="M14 4v16"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h8"/><path d="m16 3 5 5L10 19l-5 1 1-5Z"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="M4 4.5 8 3l3 17-4 1.5zM11 3.5 15 3l2 18-4 .5zM18 4h2a1 1 0 0 1 1 1v15h-3z"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M9 4a3 3 0 1 1 6 0h3a2 2 0 0 1 2 2v4a3 3 0 1 0 0 6v2a2 2 0 0 1-2 2h-4a3 3 0 1 0-6 0H6a2 2 0 0 1-2-2v-4a3 3 0 1 1 0-6V6a2 2 0 0 1 2-2z"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2.5 5.1-5.1 2.5 2.5-5.1z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></symbol>
+    <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="m8.5 12.5 7.8-7.8a4 4 0 0 1 5.7 5.7L11 21.4a6 6 0 0 1-8.5-8.5L13 2.4"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M8 4H4v4M16 4h4v4M4 16v4h4M20 16v4h-4M4 8l6-6M14 2l6 6M4 16l6 6M14 22l6-6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10z"/><path d="M13 3v7h7M8 14h8M8 17h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l-2 2v-9.5A7.5 7.5 0 0 1 10.5 4H12"/><path d="M15 4h6M18 1v6"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+  </svg>
+
+  <div class="layout">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="sidebar-head">
+        <button class="brand" id="homeButton" type="button" aria-label="CortexFlow home">CortexFlow</button>
+        <div class="sidebar-head-actions">
+          <button class="icon-button" id="searchToggle" type="button" aria-label="Search conversation titles" title="Search conversation titles (Ctrl+K)"><svg><use href="#i-search"/></svg></button>
+          <button class="icon-button desktop-only" id="collapseSidebar" type="button" aria-label="Collapse sidebar" title="Collapse sidebar"><svg><use href="#i-panel"/></svg></button>
+          <button class="icon-button mobile-only" id="closeSidebar" type="button" aria-label="Close sidebar"><svg><use href="#i-close"/></svg></button>
+        </div>
+      </div>
+
+      <div class="search-wrap" id="searchWrap" hidden>
+        <svg><use href="#i-search"/></svg>
+        <input id="chatSearch" type="search" placeholder="Search titles" aria-label="Search conversation titles">
+        <button id="clearSearch" type="button" aria-label="Clear search"><svg><use href="#i-close"/></svg></button>
+      </div>
+
+      <button class="new-chat nav-row" id="newChat" type="button" title="New chat">
+        <svg><use href="#i-pen"/></svg><span>New chat</span>
+      </button>
+
+      <nav class="primary-nav" aria-label="Workspace">
+        <button class="nav-row" type="button" data-view="library"><svg><use href="#i-library"/></svg><span>Library</span></button>
+      </nav>
+
+      <div class="sidebar-section recents-section">
+        <div class="section-heading">Recents</div>
+        <nav id="chatList" class="chat-list" aria-label="Recent conversations"></nav>
+        <p id="noSearchResults" class="no-results" hidden>No matching chats</p>
+      </div>
+    </aside>
+
+    <div class="scrim" id="scrim"></div>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-button mobile-only" id="openSidebar" type="button" aria-label="Open sidebar"><svg><use href="#i-panel"/></svg></button>
+        <div class="topbar-spacer"></div>
+        <div class="menu-host">
+          <button class="icon-button" id="moreButton" type="button" aria-label="More options" aria-expanded="false"><svg><use href="#i-more"/></svg></button>
+          <div class="more-menu" id="moreMenu" hidden>
+            <button type="button" id="checkConnection"><span class="menu-status-dot"></span> Check connection</button>
+            <p id="connectionStatus" role="status" hidden></p>
+          </div>
+        </div>
+      </header>
+
+      <section class="scroll-area" id="scrollArea" aria-label="Conversation">
+        <div class="welcome" id="welcome">
+          <h1>What can I help with?</h1>
+          <p>Ask a question, explore an idea, or work through a problem.</p>
+          <div class="suggestions" aria-label="Suggested prompts">
+            <button class="suggestion" type="button" data-prompt="Help me understand an agentic AI workflow.">
+              <span class="suggestion-icon"><svg><use href="#i-sparkles"/></svg></span>
+              <span><b>Explore agentic AI</b><small>Understand agents and workflows</small></span>
+            </button>
+            <button class="suggestion" type="button" data-prompt="Help me debug a Python error. I will share the traceback and relevant code.">
+              <span class="suggestion-icon"><svg><use href="#i-code"/></svg></span>
+              <span><b>Debug a problem</b><small>Work through an error</small></span>
+            </button>
+            <button class="suggestion" type="button" data-prompt="Explain how LangGraph state, nodes, edges, and routing work together, with an example.">
+              <span class="suggestion-icon"><svg><use href="#i-chat"/></svg></span>
+              <span><b>Understand LangGraph</b><small>Explore state and nodes</small></span>
+            </button>
+            <button class="suggestion" type="button" data-prompt="Help me plan a solution to a complex task. Start by clarifying the objective and constraints.">
+              <span class="suggestion-icon"><svg><use href="#i-compass"/></svg></span>
+              <span><b>Plan a solution</b><small>Break a task into steps</small></span>
+            </button>
+          </div>
+        </div>
+        <div class="messages" id="messages" aria-live="polite" aria-relevant="additions text"></div>
+        <section class="workspace-page" id="workspacePage" hidden aria-live="polite"></section>
+      </section>
+
+      <footer class="composer-area" id="composerArea">
+        <div class="composer" id="composer">
+          <div id="attachmentChips" class="attachment-chips" hidden></div>
+          <form id="chatForm">
+            <div class="composer-main">
+              <textarea id="prompt" rows="1" placeholder="Message CortexFlow" aria-label="Message CortexFlow" autocomplete="off"></textarea>
+              <button class="icon-button expand-button" id="expandComposer" type="button" aria-label="Expand message box" title="Expand message box"><svg><use href="#i-expand"/></svg></button>
+            </div>
+            <div class="composer-footer">
+              <div class="composer-left">
+                <div class="attach-host">
+                  <button class="icon-button attach-button" id="attachButton" type="button" aria-label="Attach text files" title="Attach text or code files"><svg><use href="#i-plus"/></svg></button>
+                  <div class="attach-menu" id="attachMenu" hidden>
+                    <button type="button" id="chooseFiles"><svg><use href="#i-paperclip"/></svg> Add text or code files</button>
+                    <p>Text files are added as context to your message.</p>
+                  </div>
+                </div>
+                <span id="status" role="status">Enter to send · Shift+Enter for a new line</span>
+              </div>
+              <div class="composer-right">
+                <button class="icon-button voice-button" id="voiceButton" type="button" aria-label="Dictate message" title="Dictate message"><svg><use href="#i-mic"/></svg></button>
+                <button id="send" class="send" type="submit" aria-label="Send message" title="Send message"><svg><use href="#i-send"/></svg></button>
+              </div>
+            </div>
+          </form>
+        </div>
+        <input id="fileInput" type="file" hidden multiple accept=".txt,.md,.py,.js,.ts,.jsx,.tsx,.json,.csv,.yaml,.yml,.html,.css,.sql,.log,.sh,.xml,.toml,.ini,.env,.ipynb">
+        <p class="footnote">CortexFlow can make mistakes. Verify important information.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
